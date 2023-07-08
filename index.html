@@ -1,0 +1,100 @@
+﻿<!DOCTYPE html>
+<html>
+<body>
+
+    <h1>Save Card Deck</h1>
+
+    <textarea id="userInput"></textarea>
+    <button onclick="textSave()">Submit</button>
+
+    <canvas id="myCanvas" width="300" height="500" style="border:1px solid #d3d3d3;">
+        Your browser does not support the HTML5 canvas tag.
+    </canvas>
+
+    <button onclick="downloadAll()">Download All</button>
+
+
+    <script>
+        var cardTexts = [];
+        var cardImages = [];
+
+        function textSave() {
+            // Remove all old download links
+            var oldLinks = document.querySelectorAll("a[id^='downloadLink']");
+            oldLinks.forEach(function (link) {
+                link.parentNode.removeChild(link);
+            });
+
+            var input = document.getElementById("userInput").value;
+            cardTexts = input.split('\n');
+            cardImages = []; // clear the array
+
+            var c = document.getElementById("myCanvas");
+            var ctx = c.getContext("2d");
+
+            for (var i = 0; i < cardTexts.length; i++) {
+                // Clear the entire canvas
+                ctx.clearRect(0, 0, c.width, c.height);
+
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, 0, c.width, c.height);
+                ctx.fillStyle = "black"; // Reset the fill style for text
+
+                ctx.font = "30px Arial";
+                var lineHeight = 35; // Height for line breaks
+                var x = 10; // Initial horizontal position
+                var y = 30; // Initial vertical position
+                var maxWidth = 280; // Maximum width of the text area
+                wrapText(ctx, cardTexts[i], x, y, maxWidth, lineHeight);
+                cardImages[i] = c.toDataURL("image/png");
+
+                // Extract the filename from the card text
+                var filename = cardTexts[i].split(':')[0].trim().replace(/[^a-z0-9]/gi, '_').toLowerCase();
+
+                var downloadLink = document.createElement('a');
+                downloadLink.id = 'downloadLink' + i;
+                downloadLink.download = filename + ".png";
+                downloadLink.textContent = "Download Card " + (i + 1); // Adding text
+                downloadLink.style.display = "block"; // Display as block to make it on new line
+                downloadLink.href = cardImages[i];
+                document.body.appendChild(downloadLink);
+            }
+        }
+
+
+        function downloadAll() {
+            for (var i = 0; i < cardImages.length; i++) {
+                // Programmatically click the download link after a delay
+                (function (i) {
+                    setTimeout(function () {
+                        var downloadLink = document.getElementById('downloadLink' + i);
+                        downloadLink.click();
+                    }, i * 1000); // Increase delay if needed
+                })(i);
+            }
+        }
+
+
+        function wrapText(context, text, x, y, maxWidth, lineHeight) {
+            var words = text.split(' ');
+            var line = '';
+
+            for (var n = 0; n < words.length; n++) {
+                var testLine = line + words[n] + ' ';
+                var metrics = context.measureText(testLine);
+                var testWidth = metrics.width;
+                if (testWidth > maxWidth && n > 0) {
+                    context.fillText(line, x, y);
+                    line = words[n] + ' ';
+                    y += lineHeight;
+                }
+                else {
+                    line = testLine;
+                }
+            }
+            context.fillText(line, x, y);
+        }
+    </script>
+
+</body>
+</html>
